@@ -1,9 +1,11 @@
 Parameter,Value
 Capital_cost,66
 OM_cost,66
+OP_cost,0.001
 Charging_eff,0.95
 Discharging_eff,0.95
 Charging_lim,0.5
 Discharging_lim,0.5
 Depth_of_discharge,0.9
 Max_charge,0.9
+Lifetime,20
