@@ -57,34 +57,49 @@ fix(C_BT, 20; force=true);
 @objective(M, Min, Scalars["CRF"]*PV_par["Capital_cost"]*C_PV + Scalars["CRF"]*Battery_par["Capital_cost"]*C_BT +
 Battery_par["OP_cost"]*sum(b_dh[t,y] + b_ch[t,y] for t in T for y in Y) + sum(g_im[t,y]*Tariffs[t,"Tariff_import"] - g_ex[t,y]*Tariffs[t,"Tariff_export"] for t in T for y in Y))
 
+# Balancing constraint taking into account only load flows
 @constraint(M, Balance[t in T, y in Y], g_im_load[t,y] + b_dh_load[t,y] + p_PV_load[t,y] - Demand[t,y] == 0)
 
+# SOC regular balance when the hours set is not 1
 @constraint(M, SOC[t in T, y in Y; t>1], b_st[t,y] == b_st[t-1,y] - b_dh[t,y]/Battery_par["Discharging_eff"] + b_ch[t,y]*Battery_par["Charging_eff"])
 
+# SOC balance for the first hour and NOT first year
 @constraint(M, SOC_LastT[t in T, y in Y; t == 1 && y!=1], b_st[t,y] == b_st[last(T),y-1] - b_dh[t,y]/Battery_par["Discharging_eff"] + b_ch[t,y]*Battery_par["Charging_eff"])
 
+# SOC balance for the first hour and first year
 @constraint(M, SOC_First[t in T, y in Y; t==1 && y==1], b_st[t,y] == C_BT - b_dh[t,y]/Battery_par["Discharging_eff"] + b_ch[t,y]*Battery_par["Charging_eff"] )
 
+# Limit on the maximum charge state of charge of the battery
 @constraint(M, SOC_lim_up[t in T, y in Y], b_st[t,y] <= Battery_par["Max_charge"]*C_BT)
 
+# Limit on the maximum hourly charging
 @constraint(M, Charge_limit[t in T, y in Y], b_ch[t,y] <= Battery_par["Charging_lim"]*C_BT)
 
+# Limit on the maximum hourly discharging
 @constraint(M, Discharge_limit[t in T, y in Y], b_ch[t,y] <= Battery_par["Discharging_lim"]*C_BT)
 
+# Limit on the minimum battery state of charge (depth of discharge)
 @constraint(M, SOC_lim_down[t in T, y in Y], b_st[t,y] >= (1-Battery_par["Depth_of_discharge"])*C_BT)
 
+# Limit on the amount of hourly exported electricity
 @constraint(M, grid_ex_lim[t in T, y in Y], g_ex[t,y] <= Grid_par["Ex_lim"])
 
+# Limit on the amount of hourly imported electricity
 @constraint(M, grid_im_lim[t in T, y in Y], g_im[t,y] <= Grid_par["Im_lim"])
 
+# Balance of the imported energy
 @constraint(M, grid_im_def[t in T, y in Y], g_im[t,y] == g_im_load[t,y] + g_im_bat[t,y])
 
+# Balance of the exported energy
 @constraint(M, grid_ex_def[t in T, y in Y], g_ex[t,y] == p_PV_ex[t,y] + b_dh_ex[t,y])
 
+# Balance of the charging energy
 @constraint(M, bat_ch_def[t in T, y in Y], b_ch[t,y] == p_PV_bat[t,y] + g_im_bat[t,y])
 
+# Balance of the discharging energy
 @constraint(M, bat_dh_def[t in T, y in Y], b_dh[t,y] == b_dh_ex[t,y] + b_dh_load[t,y])
 
+# Balance of the PV energy
 @constraint(M, PV_prod_def[t in T, y in Y], C_PV*PV_CF[t,y] == p_PV_bat[t,y] + p_PV_ex[t,y] + p_PV_load[t,y])
 # ---------------------------------
 # SOLVING COMMANDS
