@@ -6,7 +6,8 @@ Sets = CSV.read("Data/Sets.csv", DataFrame)
 
 Demand_profiles = CSV.read("Data/Demand_profiles.csv", DataFrame)
 
-Tariffs= CSV.read("Data/Tariff.csv", DataFrame)
+El_price = CSV.read("Data/Electricity_prices.csv", DataFrame)
+Network_tariffs  = CSV.File("Data/Network_tariffs.csv") |> Dict
 
 PV_par = CSV.File("Data/PV_par.csv") |> Dict
 Battery_par = CSV.File("Data/Battery_par.csv") |> Dict
@@ -53,9 +54,13 @@ M = Model(CPLEX.Optimizer)
 fix(C_PV, 100; force=true);
 fix(C_BT, 20; force=true);
 
+
 # Define the objective function
-@objective(M, Min, Scalars["CRF"]*PV_par["Capital_cost"]*C_PV + Scalars["CRF"]*Battery_par["Capital_cost"]*C_BT +
-Battery_par["OP_cost"]*sum(b_dh[t,y] + b_ch[t,y] for t in T for y in Y) + sum(g_im[t,y]*Tariffs[t,"Tariff_import"] - g_ex[t,y]*Tariffs[t,"Tariff_export"] for t in T for y in Y))
+
+    @objective(M, Min, sum(Scalars["CRF"]*PV_par["Capital_cost"]*C_PV + Scalars["CRF"]*Battery_par["Capital_cost"]*C_BT for y in Y) +
+    Battery_par["OP_cost"]*sum(b_dh[t,y] + b_ch[t,y] for t in T for y in Y) + sum(g_im[t,y]*(El_price[t,"Tariff_import"]+Network_tariffs["Var_dist"]+Network_tariffs["PSO"]) - g_ex[t,y]*(El_price[t,"Tariff_export"]+Network_tariffs["Var_dist"]) for t in T for y in Y)
+    + sum(Network_tariffs["Fixed_dist"] for y in Y))
+    + sum(g_im_load[t,y] + p_PV_load[t,y] + g_im_bat[t,y] + p_PV_bat[t,y] - b_dh_ex[t,y] for t in T for y in Y)
 
 # Balancing constraint taking into account only load flows
 @constraint(M, Balance[t in T, y in Y], g_im_load[t,y] + b_dh_load[t,y] + p_PV_load[t,y] - Demand[t,y] == 0)
