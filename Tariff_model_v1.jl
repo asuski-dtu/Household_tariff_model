@@ -1,5 +1,6 @@
 using CSV, DataFrames
 using JuMP, Gurobi, CPLEX
+import XLSX
 
 Sets = CSV.read("Data/Sets.csv", DataFrame)
 #Sets = Dict( string(i) => collect(skipmissing(Sets[:,i])) for i in names(Sets))
@@ -114,6 +115,65 @@ println( "----------- OBJECTIVE FUNCTION ------------")
 println( "OF: ",round(objective_value(M)),"\n")
 println( "\n")
 
-#df_results = DataFrame(Battery_status=[value.(b_st[t,y]) for t in T] , #Battery_charging=[value.(b_ch[t,y]) for t in T], #Battery_discharging=[value.(b_dh[t,y])  for t in T], #PV_prod=value.(C_PV)*PV_CF[:], Grid_export = [value.(g_ex[t,y])  for t in T], #Grid_import = [value.(g_im[t,y])  for t in T], Demand = #Demand_profiles[:,Demand_Type])
-#
-#@show df_results[1:20,:]
+# Function to convert variables to the data_frames
+function ExportVariable(variable, sets, sets_names)
+    # Create column names of the dataframe
+    colnames= Symbol.(var for var in push!(sets_names, "Value"))
+
+    # Create dataframe
+    df = DataFrame(fill(Any, length(colnames)), colnames)
+
+    for i1 in sets[1]
+        if length(sets) == 1
+            push!(df, Tuple([i1, value(variable[i1,i2])]))
+        else
+            for i2 in sets[2]
+                if length(sets) == 2
+                    push!(df, Tuple([i1, i2, value(variable[i1,i2])]))
+                else
+                    for i3 in sets[3]
+                        if length(sets) == 2
+                            push!(df, Tuple([i1, i2,i3, value(variable[i1,i2,i3])]))
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return df
+end
+
+# List of all variables (not in use now)
+VARS = [b_st,b_dh,b_dh_load,b_dh_ex,b_ch,p_PV,p_PV_load,p_PV_bat,p_PV_ex,g_ex,g_im,g_im_load,g_im_bat]
+
+# If Results.xlsx exists then remove
+if isfile("Results.xlsx")
+    rm("Results.xlsx")
+end
+
+# Writing results to excel
+    XLSX.writetable("Results.xlsx",
+                                b_st=( collect(DataFrames.eachcol(ExportVariable(b_st,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(b_st,[T,Y],["T","Y"]))),
+
+                                b_dh=( collect(DataFrames.eachcol(ExportVariable(b_dh,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(b_dh,[T,Y],["T","Y"]))),
+
+                                b_dh_load=( collect(DataFrames.eachcol(ExportVariable(b_dh_load,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(b_dh_load,[T,Y],["T","Y"]))),
+
+                                b_dh_ex=( collect(DataFrames.eachcol(ExportVariable(b_dh_ex,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(b_dh_ex,[T,Y],["T","Y"]))),
+
+                                b_ch=( collect(DataFrames.eachcol(ExportVariable(b_ch,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(b_ch,[T,Y],["T","Y"]))),
+
+                                p_PV=( collect(DataFrames.eachcol(ExportVariable(p_PV,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(p_PV,[T,Y],["T","Y"]))),
+
+                                p_PV_load=( collect(DataFrames.eachcol(ExportVariable(p_PV_load,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(p_PV_load,[T,Y],["T","Y"]))),
+
+                                p_PV_bat=( collect(DataFrames.eachcol(ExportVariable(p_PV_bat,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(p_PV_bat,[T,Y],["T","Y"]))),
+
+                                g_ex=( collect(DataFrames.eachcol(ExportVariable(g_ex,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(g_ex,[T,Y],["T","Y"]))),
+
+                                g_im=( collect(DataFrames.eachcol(ExportVariable(g_im,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(g_im,[T,Y],["T","Y"]))),
+
+                                g_im_load=( collect(DataFrames.eachcol(ExportVariable(g_im_load,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(g_im_load,[T,Y],["T","Y"]))),
+
+                                g_im_bat=( collect(DataFrames.eachcol(ExportVariable(g_im_bat,[T,Y],["T","Y"]))), DataFrames.names(ExportVariable(g_im_bat,[T,Y],["T","Y"]))),
+                                )
