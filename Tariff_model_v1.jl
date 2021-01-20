@@ -106,67 +106,67 @@ end
 # -------------------------------------------------------------------------------------------------------------------
 function DefineConstraints(M, scheme)
     if scheme == "new"
-        @objective(M, Min, sum(sum(Scalars["CRF"]*PV_par["Capital_cost"]*M[:C_PV]
-            + Scalars["CRF"]*Battery_par["Capital_cost"]*M[:C_BT] for y in Y) +
-            Battery_par["OP_cost"]*sum(M[:b_dh][t,y] + M[:b_ch][t,y] for t in T for y in Y) + sum(M[:g_im][t,y]*(El_price[t,"Tariff_import"]+Network_tariffs["Var_dist"]+Network_tariffs["PSO"]) - M[:g_ex][t,y]*(El_price[t,"Tariff_export"]+Network_tariffs["Var_dist"]) for t in T for y in Y)
+        @objective(M, Min, sum(sum(Scalars["CRF"]*PV_par["Capital_cost"]*M[:C_PV][s]
+            + Scalars["CRF"]*Battery_par["Capital_cost"]*M[:C_BT][s] for y in Y) +
+            Battery_par["OP_cost"]*sum(M[:b_dh][t,y,s] + M[:b_ch][t,y,s] for t in T for y in Y) + sum(M[:g_im][t,y,s]*(El_price[t,"Tariff_import"]+Network_tariffs["Var_dist"]+Network_tariffs["PSO"]) - M[:g_ex][t,y,s]*(El_price[t,"Tariff_export"]+Network_tariffs["Var_dist"]) for t in T for y in Y)
             + sum(Network_tariffs["Fixed_dist"] for y in Y)
-            + (Network_tariffs["Tax"] * sum(M[:g_im_load][t,y] + M[:p_PV_load][t,y] + M[:g_im_bat][t,y] + M[:p_PV_bat][t,y] - M[:b_dh_ex][t,y] for t in T for y in Y)) for s in S))
+            + (Network_tariffs["Tax"] * sum(M[:g_im_load][t,y,s] + M[:p_PV_load][t,y,s] + M[:g_im_bat][t,y,s] + M[:p_PV_bat][t,y,s] - M[:b_dh_ex][t,y,s] for t in T for y in Y)) for s in S))
 
     elseif scheme == "base"
-        @objective(M, Min, sum(sum(Scalars["CRF"]*PV_par["Capital_cost"]*M[:C_PV]
-            + Scalars["CRF"]*Battery_par["Capital_cost"]*M[:C_BT] for y in Y) +
-            Battery_par["OP_cost"]*sum(M[:b_dh][t,y] + M[:b_ch][t,y] for t in T for y in Y) + sum(M[:g_im][t,y]*(El_price[t,"Tariff_import"]+Network_tariffs["Var_dist"]+Network_tariffs["PSO"]+Network_tariffs["Tax"])
-            - M[:g_ex][t,y]*El_price[t,"Tariff_export"] for t in T for y in Y)
+        @objective(M, Min, sum(sum(Scalars["CRF"]*PV_par["Capital_cost"]*M[:C_PV][s]
+            + Scalars["CRF"]*Battery_par["Capital_cost"]*M[:C_BT][s] for y in Y) +
+            Battery_par["OP_cost"]*sum(M[:b_dh][t,y,s] + M[:b_ch][t,y,s] for t in T for y in Y) + sum(M[:g_im][t,y,s]*(El_price[t,"Tariff_import"]+Network_tariffs["Var_dist"]+Network_tariffs["PSO"]+Network_tariffs["Tax"])
+            - M[:g_ex][t,y,s]*El_price[t,"Tariff_export"] for t in T for y in Y)
             + sum(Network_tariffs["Fixed_dist"] for y in Y) for s in S))
     end
 
     # Balancing constraint taking into account only load flows
-    @constraint(M, Balance[t in T, y in Y, s in S], M[:g_im_load][t,y] + M[:b_dh_load][t,y] + M[:p_PV_load][t,y] - Demand[t,y] == 0)
+    @constraint(M, Balance[t in T, y in Y, s in S], M[:g_im_load][t,y,s] + M[:b_dh_load][t,y,s] + M[:p_PV_load][t,y,s] - Demand[t,y,s] == 0)
 
     # SOC regular balance when the hours set is not 1
-    @constraint(M, SOC[t in T, y in Y, s in S; t>1], M[:b_st][t,y] == M[:b_st][t-1,y] - M[:b_dh][t,y]/Battery_par["Discharging_eff"] + M[:b_ch][t,y]*Battery_par["Charging_eff"])
+    @constraint(M, SOC[t in T, y in Y, s in S; t>1], M[:b_st][t,y,s] == M[:b_st][t-1,y,s] - M[:b_dh][t,y,s]/Battery_par["Discharging_eff"] + M[:b_ch][t,y,s]*Battery_par["Charging_eff"])
 
     # SOC balance for the first hour and NOT first year
-    @constraint(M, SOC_LastT[t in T, y in Y, s in S; t == 1 && y!=1], M[:b_st][t,y] == M[:b_st][last(T),y-1] - M[:b_dh][t,y]/Battery_par["Discharging_eff"] + M[:b_ch][t,y]*Battery_par["Charging_eff"])
+    @constraint(M, SOC_LastT[t in T, y in Y, s in S; t == 1 && y!=1], M[:b_st][t,y,s] == M[:b_st][last(T),y-1,s] - M[:b_dh][t,y,s]/Battery_par["Discharging_eff"] + M[:b_ch][t,y,s]*Battery_par["Charging_eff"])
 
     # SOC balance for the first hour and first year
-    @constraint(M, SOC_First[t in T, y in Y, s in S; t==1 && y==1], M[:b_st][t,y] == M[:C_BT] - M[:b_dh][t,y]/Battery_par["Discharging_eff"] + M[:b_ch][t,y]*Battery_par["Charging_eff"] )
+    @constraint(M, SOC_First[t in T, y in Y, s in S; t==1 && y==1], M[:b_st][t,y,s] == M[:C_BT][s] - M[:b_dh][t,y,s]/Battery_par["Discharging_eff"] + M[:b_ch][t,y,s]*Battery_par["Charging_eff"] )
 
     # Limit on the maximum charge state of charge of the battery
-    @constraint(M, SOC_lim_up[t in T, y in Y, s in S], M[:b_st][t,y] <= Battery_par["Max_charge"]*M[:C_BT])
+    @constraint(M, SOC_lim_up[t in T, y in Y, s in S], M[:b_st][t,y,s] <= Battery_par["Max_charge"]*M[:C_BT][s])
 
     # Limit on the maximum hourly charging
-    @constraint(M, Charge_limit[t in T, y in Y, s in S], M[:b_ch][t,y] <= Battery_par["Charging_lim"]*M[:C_BT])
+    @constraint(M, Charge_limit[t in T, y in Y, s in S], M[:b_ch][t,y,s] <= Battery_par["Charging_lim"]*M[:C_BT][s])
 
     # Limit on the maximum hourly discharging
-    @constraint(M, Discharge_limit[t in T, y in Y, s in S], M[:b_ch][t,y] <= Battery_par["Discharging_lim"]*M[:C_BT])
+    @constraint(M, Discharge_limit[t in T, y in Y, s in S], M[:b_ch][t,y,s] <= Battery_par["Discharging_lim"]*M[:C_BT][s])
 
     # Limit on the minimum battery state of charge (depth of discharge)
-    @constraint(M, SOC_lim_down[t in T, y in Y, s in S], M[:b_st][t,y] >= (1-Battery_par["Depth_of_discharge"])*M[:C_BT])
+    @constraint(M, SOC_lim_down[t in T, y in Y, s in S], M[:b_st][t,y,s] >= (1-Battery_par["Depth_of_discharge"])*M[:C_BT][s])
 
     # Limit on the amount of hourly exported electricity
-    @constraint(M, grid_ex_lim[t in T, y in Y, s in S], M[:g_ex][t,y] <= Grid_par["Ex_lim"])
+    @constraint(M, grid_ex_lim[t in T, y in Y, s in S], M[:g_ex][t,y,s] <= Grid_par["Ex_lim"])
 
     # Limit on the amount of hourly imported electricity
-    @constraint(M, grid_im_lim[t in T, y in Y, s in S], M[:g_im][t,y] <= Grid_par["Im_lim"])
+    @constraint(M, grid_im_lim[t in T, y in Y, s in S], M[:g_im][t,y,s] <= Grid_par["Im_lim"])
 
     # Balance of the imported energy
-    @constraint(M, grid_im_def[t in T, y in Y, s in S], M[:g_im][t,y] == M[:g_im_load][t,y] + M[:g_im_bat][t,y])
+    @constraint(M, grid_im_def[t in T, y in Y, s in S], M[:g_im][t,y,s] == M[:g_im_load][t,y,s] + M[:g_im_bat][t,y,s])
 
     # Balance of the exported energy
-    @constraint(M, grid_ex_def[t in T, y in Y, s in S], M[:g_ex][t,y] == M[:p_PV_ex][t,y] + M[:b_dh_ex][t,y])
+    @constraint(M, grid_ex_def[t in T, y in Y, s in S], M[:g_ex][t,y,s] == M[:p_PV_ex][t,y,s] + M[:b_dh_ex][t,y,s])
 
     # Balance of the charging energy
-    @constraint(M, bat_ch_def[t in T, y in Y, s in S], M[:b_ch][t,y] == M[:p_PV_bat][t,y] + M[:g_im_bat][t,y])
+    @constraint(M, bat_ch_def[t in T, y in Y, s in S], M[:b_ch][t,y,s] == M[:p_PV_bat][t,y,s] + M[:g_im_bat][t,y,s])
 
     # Balance of the discharging energy
-    @constraint(M, bat_dh_def[t in T, y in Y, s in S], M[:b_dh][t,y] == M[:b_dh_ex][t,y] + M[:b_dh_load][t,y])
+    @constraint(M, bat_dh_def[t in T, y in Y, s in S], M[:b_dh][t,y,s] == M[:b_dh_ex][t,y,s] + M[:b_dh_load][t,y,s])
 
     # Definition of the PV array production
-    @constraint(M, PV_prod_def[t in T, y in Y, s in S], M[:C_PV]*PV_CF[t,y] == M[:p_PV][t,y])
+    @constraint(M, PV_prod_def[t in T, y in Y, s in S], M[:C_PV][s]*PV_CF[t,y,s] == M[:p_PV][t,y,s])
 
     # Balance of the PV energy
-    @constraint(M, PV_prod_bal[t in T, y in Y, s in S], M[:p_PV][t,y] == M[:p_PV_bat][t,y] + M[:p_PV_ex][t,y] + M[:p_PV_load][t,y])
+    @constraint(M, PV_prod_bal[t in T, y in Y, s in S], M[:p_PV][t,y,s] == M[:p_PV_bat][t,y,s] + M[:p_PV_ex][t,y,s] + M[:p_PV_load][t,y,s])
 
     return M
 end
@@ -192,7 +192,7 @@ function ExportVariable(variable, sets, sets_names)
                     push!(df, Tuple([i1, i2, value(variable[i1,i2])]))
                 else
                     for i3 in sets[3]
-                        if length(sets) == 2
+                        if length(sets) == 3
                             push!(df, Tuple([i1, i2,i3, value(variable[i1,i2,i3])]))
                         end
                     end
