@@ -163,7 +163,7 @@ function DefineConstraints(M, scheme)
     @constraint(M, bat_dh_def[t in T, y in Y, s in S], M[:b_dh][t,y,s] == M[:b_dh_ex][t,y,s] + M[:b_dh_load][t,y,s])
 
     # Definition of the PV array production
-    @constraint(M, PV_prod_def[t in T, y in Y, s in S], M[:C_PV][s]*PV_CF[t,y,s] == M[:p_PV][t,y,s])
+    @constraint(M, PV_prod_def[t in T, y in Y, s in S], M[:C_PV][s]*PV_CF[t,y] == M[:p_PV][t,y,s])
 
     # Balance of the PV energy
     @constraint(M, PV_prod_bal[t in T, y in Y, s in S], M[:p_PV][t,y,s] == M[:p_PV_bat][t,y,s] + M[:p_PV_ex][t,y,s] + M[:p_PV_load][t,y,s])
@@ -244,14 +244,20 @@ end
 # -------------------------------------------------------------------------------------------------------------------
 #                                       RUNNING THE MODEL
 # -------------------------------------------------------------------------------------------------------------------
+# Importing data
 ModelDataImport()
+# Initializng the model and variables
 M = InitializeModel()
-# SELECTING THE TYPE OF DEMAND
-Household_type = "T2"
+# Selecting the type of demand
+Household_type = "T4"
 # Fixing the demand for a specific year
 Demand = Array{Float64}(undef, length(T), length(Y), length(S))
 Demand[:,:,:] .= Demand_profiles[:,Household_type]
-FixingCap(M,Household_type, 20, 100)
-DefineConstraints(M, "new")
+# Fixing the capacities of PV and Battery
+FixingCap(M,Household_type, 5, 15)
+# Fixing the capacities
+M = DefineConstraints(M, "new")
+# Optimizing!
 optimize!(M)
+# Exporting the results
 ExportResults(M, "Results.xlsx")
