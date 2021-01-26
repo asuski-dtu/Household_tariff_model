@@ -54,18 +54,18 @@ Data folder contains the following files:
 ### *CalculatingParameters()* function
 *CalculatingParameters()* function calculates the parameters that are later used in the model. This function takes as an input the scalars *SOC_goal* and *EV_cons_one_trip*. The former one is a goal of SOC that is set before every EV trip. The latter one is a consumption of single EV trip.
 This function calculates and returns four 3-dimentional arrays:
-    - *Demand* is an array containing hourly household demand in every time t, year y and scenario s. Currently this is calculated based on single yearly time series from input data and assigned for every year and scenario.
-    - *EV_avail* it is the binary array containing hourly availability of EV in every time t, year y and scenario s. Currently this is calculated based on single yearly time series from input data and assigned for every year and scenario.
-    - *EV_demand* it is an array containing hourly consumption of EV in every time t, year y and scenario s. It is calculated based on the input scalar and *EV_avail*. Practically, the whole trip demand is assigned to the one hour before returning from the trip (retrieving availability).
-    - *EV_SOC_goal* it is an array containing hourly goal of EV in every time t, year y and scenario s. It is calculated based on the input scalar and *EV_avail*. Goal is set one hour before the start of every trip.
+- *Demand* is an array containing hourly household demand in every time t, year y and scenario s. Currently this is calculated based on single yearly time series from input data and assigned for every year and scenario.
+- *EV_avail* it is the binary array containing hourly availability of EV in every time t, year y and scenario s. Currently this is calculated based on single yearly time series from input data and assigned for every year and scenario.
+- *EV_demand* it is an array containing hourly consumption of EV in every time t, year y and scenario s. It is calculated based on the input scalar and *EV_avail*. Practically, the whole trip demand is assigned to the one hour before returning from the trip (retrieving availability).
+- *EV_SOC_goal* it is an array containing hourly goal of EV in every time t, year y and scenario s. It is calculated based on the input scalar and *EV_avail*. Goal is set one hour before the start of every trip.
 
 ### *DefineConstraints()* function
 *DefineConstraints()* introduces all the constraints of the model, presented in the mathematical model document. As an input this function takes the model object *M* and the type of the objective function to run as a string. This function returns model object with defined constraints. Currently there are two possible inputs:
-    - *new* - is a objective function with tariff and tax scheme proposed by Fausto et al.
-    - *base* - it is the base case function where traditional tariff is applied.
+- *new* - is a objective function with tariff and tax scheme proposed by Fausto et al.
+- *base* - it is the base case function where traditional tariff is applied.
 
 ### *ExportVariable()* function
 *ExportVariable()* is a auxiliary function that is used to transform the variable object of JuMP after solving to the DataFrame format. Currently it is able to handle up to 3-dimentional sets. If more dimensions should be handled then another loop should be added to the function following the pattern.
 
 ### *ExportResults()* function
-*ExportResults()* is a function that exports the variables to Excel file. As an input this function takes the model object and the name of the file with extension. First this file checks whether filename exists in the current folder. If yes it removes it and creates new files and then pushes the particular DataFrames to spreadsheets. 
+*ExportResults()* is a function that exports the variables to Excel file. As an input this function takes the model object and the name of the file with extension. First this file checks whether filename exists in the current folder. If yes it removes it and creates new files and then pushes the particular DataFrames to spreadsheets.
