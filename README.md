@@ -1,7 +1,7 @@
 # The household tariff model
 
 # Model elements
-## Data folder
+### Data folder
 Data folder contains the following files:
 - **Battery_par.csv** - this file includes specific technical and economic data about battery bank in the household. It includes the following parameters:
     - *Capital_cost* - capital cost of the battery in DKK/kW
@@ -42,5 +42,30 @@ Data folder contains the following files:
 - **Sets.csv** - this file includes the sets that are used in the model. For now it includes sets T-time, Y-year, S-scenario:
 - **SolarCF.csv** - this file includes the hourly capacity factor of PV array.
 
-## *ModelDataImport()* function
-*ModelDataImport()* function imports data from Data folder. In case of the one and more dimentional parameters it saves it as a DataFrames (e.g. PV_CF, El_price). In case of scalars, it reads data as dataframes and converts it into the dictionaries (e.g. Network_tariffs PV_par) with `| Dict` operator. Sets are saved as a regular arrays.
+### *ModelDataImport()* function
+*ModelDataImport()* function imports data from Data folder. In case of the one and more dimentional parameters it saves it as a DataFrames (e.g. PV_CF, El_price). In case of scalars, it reads data as dataframes and converts it into the dictionaries (e.g. Network_tariffs PV_par) with `|> Dict` operator. Sets are saved as a regular arrays. All the parameters, after reading from the function are saved as `global`, in order to use them outside of the function without calling them each time.
+
+### *InitializeModel()* function
+*InitializeModel()* function initializes the model (with symbol *M*) and defines the variables of the model. Function returns model object *M* with all variables defined. In this function also the solver of the model is defined.
+
+### *FixingCap()* function
+*FixingCap()* function takes as an input the model object *M*, the type of the household as a string and values of the capacities of respectively PV, battery and EV. This function reads parameter *Household_types* and based on the matrix fixes the capacities to the predefined levels (as an input to the function) if element is included in specific household type and to zero otherwise.
+
+### *CalculatingParameters()* function
+*CalculatingParameters()* function calculates the parameters that are later used in the model. This function takes as an input the scalars *SOC_goal* and *EV_cons_one_trip*. The former one is a goal of SOC that is set before every EV trip. The latter one is a consumption of single EV trip.
+This function calculates and returns four 3-dimentional arrays:
+    - *Demand* is an array containing hourly household demand in every time t, year y and scenario s. Currently this is calculated based on single yearly time series from input data and assigned for every year and scenario.
+    - *EV_avail* it is the binary array containing hourly availability of EV in every time t, year y and scenario s. Currently this is calculated based on single yearly time series from input data and assigned for every year and scenario.
+    - *EV_demand* it is an array containing hourly consumption of EV in every time t, year y and scenario s. It is calculated based on the input scalar and *EV_avail*. Practically, the whole trip demand is assigned to the one hour before returning from the trip (retrieving availability).
+    - *EV_SOC_goal* it is an array containing hourly goal of EV in every time t, year y and scenario s. It is calculated based on the input scalar and *EV_avail*. Goal is set one hour before the start of every trip.
+
+### *DefineConstraints()* function
+*DefineConstraints()* introduces all the constraints of the model, presented in the mathematical model document. As an input this function takes the model object *M* and the type of the objective function to run as a string. This function returns model object with defined constraints. Currently there are two possible inputs:
+    - *new* - is a objective function with tariff and tax scheme proposed by Fausto et al.
+    - *base* - it is the base case function where traditional tariff is applied.
+
+### *ExportVariable()* function
+*ExportVariable()* is a auxiliary function that is used to transform the variable object of JuMP after solving to the DataFrame format. Currently it is able to handle up to 3-dimentional sets. If more dimensions should be handled then another loop should be added to the function following the pattern.
+
+### *ExportResults()* function
+*ExportResults()* is a function that exports the variables to Excel file. As an input this function takes the model object and the name of the file with extension. First this file checks whether filename exists in the current folder. If yes it removes it and creates new files and then pushes the particular DataFrames to spreadsheets. 

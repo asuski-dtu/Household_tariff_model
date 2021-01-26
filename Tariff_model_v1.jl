@@ -58,6 +58,7 @@ function InitializeModel()
     @variable(M, b_dh[t in T, y in Y, s in S], lower_bound=0, base_name="Battery discharging in hour T")
     @variable(M, b_dh_load[t in T, y in Y, s in S], lower_bound=0, base_name="Battery discharging to the load in hour T")
     @variable(M, b_dh_ex[t in T, y in Y, s in S], lower_bound=0, base_name="Battery discharging to the grid in hour T")
+    @variable(M, b_dh_ev[t in T, y in Y, s in S], lower_bound=0, base_name="Battery discharging to the ev in hour T")
     @variable(M, b_ch[t in T, y in Y, s in S], lower_bound=0, base_name="Battery charging in hour T")
 
     # EV related variables
@@ -91,7 +92,7 @@ end
 
 
 # Fixing the capacity variables
-function FixingCap(M,Type, ref_PV_cap, ref_BT_cap, ref_EV_cap)
+function FixingCap(M, Type, ref_PV_cap, ref_BT_cap, ref_EV_cap)
     if Household_types[Household_types[!, "Type"] .== Type, "PV"][1] == 0
         for s in S
             fix(M[:C_PV][s], 0; force=true)
@@ -125,35 +126,41 @@ end
 #                                   CALCULATING THE PARAMETERS TO USE IN THE MODEL
 # -------------------------------------------------------------------------------------------------------------------
 
-function CalculatingParameters()
+# The first input to the function is SOC_goal before each trip and second one is a one time electricity consumption of the trip
+function CalculatingParameters(SOC_goal, EV_cons_one_trip)
 
-    # Fixing the demand for a specific year
+    # Initializing empty 3-dimentional array based on sets T,Y and S
     Demand = Array{Float64}(undef, length(T), length(Y), length(S))
+    # Assigning the imported data frame with specific demand profile to demand array
     Demand[:,:,:] .= Demand_profiles[:,Household_type]
 
+    # Initializing empty 3-dimentional array based on sets T,Y and S
     EV_avail = Array{Float64}(undef, length(T), length(Y), length(S))
     EV_avail[:,:,:] .= 0
+    # Assigning the availability data imported from csv file
     for i=1:(size(EV_DF,1))
         EV_avail[i,:,:] .= EV_DF[i,"EV_avail"]
     end
 
-
+    # Initializing empty 3-dimentional array based on sets T,Y and S
     EV_demand = Array{Float64}(undef, length(T), length(Y), length(S))
     EV_demand[:,:,:] .= 0
+    # Assigning data to the array based on the availability array as well as the second input to the function.
     for i=1:(size(EV_DF,1)-1)
         if EV_DF[i,"EV_avail"]==0 && EV_DF[i+1,"EV_avail"]==1
-            EV_demand[i,:,:] .= 0.7*30
+            EV_demand[i,:,:] .= EV_cons_one_trip
         else
             EV_demand[i,:,:] .= 0
         end
     end
 
-
+    # Initializing empty 3-dimentional array based on sets T,Y and S
     EV_SOC_goal = Array{Float64}(undef, length(T), length(Y), length(S))
     EV_SOC_goal[:,:,:] .= 0
+    # Assigning data to the array based on the availability array as well as the first input to the function.
     for i=1:(size(EV_DF,1)-1)
         if EV_DF[i,"EV_avail"]==1 && EV_DF[i+1,"EV_avail"]==0
-            EV_SOC_goal[i,:,:] .= 30
+            EV_SOC_goal[i,:,:] .= SOC_goal
         else
             EV_SOC_goal[i,:,:] .= 0
         end
@@ -221,7 +228,7 @@ function DefineConstraints(M, scheme)
     @constraint(M, bat_ch_def[t in T, y in Y, s in S], M[:b_ch][t,y,s] == M[:p_PV_bat][t,y,s] + M[:g_im_bat][t,y,s])
 
     # Balance of the discharging energy
-    @constraint(M, bat_dh_def[t in T, y in Y, s in S], M[:b_dh][t,y,s] == M[:b_dh_ex][t,y,s] + M[:b_dh_load][t,y,s])
+    @constraint(M, bat_dh_def[t in T, y in Y, s in S], M[:b_dh][t,y,s] == M[:b_dh_ex][t,y,s] + M[:b_dh_load][t,y,s] + M[:b_dh_ev][t,y,s])
 
     # Definition of the PV array production
     @constraint(M, PV_prod_def[t in T, y in Y, s in S], M[:C_PV][s]*PV_CF[t,y] == M[:p_PV][t,y,s])
@@ -255,7 +262,7 @@ function DefineConstraints(M, scheme)
     @constraint(M, SOC_lim_down_EV[t in T, y in Y, s in S], M[:ev_st][t,y,s] >= EV_par["Min_charge"]*M[:C_EV][s])
 
     # Balance of the charging energy in EV
-    @constraint(M, ev_ch_def[t in T, y in Y, s in S], M[:ev_ch][t,y,s] == M[:p_PV_ev][t,y,s] + M[:g_im_ev][t,y,s])
+    @constraint(M, ev_ch_def[t in T, y in Y, s in S], M[:ev_ch][t,y,s] == M[:p_PV_ev][t,y,s] + M[:g_im_ev][t,y,s] + M[:b_dh_ev][t,y,s])
 
     # Balance of the discharging energy in EV
     @constraint(M, ev_dh_def[t in T, y in Y, s in S], M[:ev_dh][t,y,s] == M[:ev_dh_ex][t,y,s] + M[:ev_dh_load][t,y,s])
@@ -273,11 +280,13 @@ function ExportVariable(variable, sets, sets_names)
     # Create column names of the dataframe
     colnames= Symbol.(var for var in push!(sets_names, "Value"))
 
-    # Create dataframe
+    # Create empty dataframe with the colnames
     df = DataFrame(fill(Any, length(colnames)), colnames)
 
+    # Loping over every set and checking how how many sets to loop over
     for i1 in sets[1]
         if length(sets) == 1
+            # If the variable has only one set push all the values to the dataframe
             push!(df, Tuple([i1, value(variable[i1,i2])]))
         else
             for i2 in sets[2]
@@ -299,8 +308,9 @@ end
 # List of all variables (not in use now)
 #VARS = [b_st,b_dh,b_dh_load,b_dh_ex,b_ch,p_PV,p_PV_load,p_PV_bat,p_PV_ex,g_ex,g_im,g_im_load,g_im_bat]
 
-# If Results.xlsx exists then remove
+
 function ExportResults(M, filename)
+# If Results.xlsx exists then remove
     if isfile(filename)
         rm(filename)
         println("Removing "*filename)
@@ -314,6 +324,8 @@ function ExportResults(M, filename)
                                 b_dh_load=( collect(DataFrames.eachcol(ExportVariable(M[:b_dh_load],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:b_dh_load],[T,Y,S],["T","Y","S"]))),
 
                                 b_dh_ex=( collect(DataFrames.eachcol(ExportVariable(M[:b_dh_ex],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:b_dh_ex],[T,Y,S],["T","Y","S"]))),
+
+                                b_dh_ev=( collect(DataFrames.eachcol(ExportVariable(M[:b_dh_ev],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:b_dh_ev],[T,Y,S],["T","Y","S"]))),
 
                                 b_ch=( collect(DataFrames.eachcol(ExportVariable(M[:b_ch],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:b_ch],[T,Y,S],["T","Y","S"]))),
 
@@ -356,7 +368,7 @@ ModelDataImport()
 # Initializng the model and variables
 M = InitializeModel()
 # Calculating the parameters
-Demand, EV_avail, EV_demand, EV_SOC_goal = CalculatingParameters()
+Demand, EV_avail, EV_demand, EV_SOC_goal =CalculatingParameters(30, 30*0.7)
 # Selecting the type of demand
 Household_type = "T4"
 # Fixing the capacities of PV, Battery and EV
