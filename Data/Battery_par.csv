@@ -6,6 +6,6 @@ Charging_eff,0.95
 Discharging_eff,0.95
 Charging_lim,0.5
 Discharging_lim,0.5
-Depth_of_discharge,0.9
+Min_charge,0.1
 Max_charge,0.9
 Lifetime,20

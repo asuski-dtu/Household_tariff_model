@@ -142,7 +142,7 @@ function DefineConstraints(M, scheme)
     @constraint(M, Discharge_limit[t in T, y in Y, s in S], M[:b_ch][t,y,s] <= Battery_par["Discharging_lim"]*M[:C_BT][s])
 
     # Limit on the minimum battery state of charge (depth of discharge)
-    @constraint(M, SOC_lim_down[t in T, y in Y, s in S], M[:b_st][t,y,s] >= (1-Battery_par["Depth_of_discharge"])*M[:C_BT][s])
+    @constraint(M, SOC_lim_down[t in T, y in Y, s in S], M[:b_st][t,y,s] >= Battery_par["Min_charge"]*M[:C_BT][s])
 
     # Limit on the amount of hourly exported electricity
     @constraint(M, grid_ex_lim[t in T, y in Y, s in S], M[:g_ex][t,y,s] <= Grid_par["Ex_lim"])
