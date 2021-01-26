@@ -49,7 +49,6 @@ end
 #                                   INITIALIZE MODEL AND THE VARIABLES FUNCTION
 # -------------------------------------------------------------------------------------------------------------------
 
-
 function InitializeModel()
     M = Model(Gurobi.Optimizer)
 
@@ -122,8 +121,46 @@ function FixingCap(M,Type, ref_PV_cap, ref_BT_cap, ref_EV_cap)
     end
 end
 
-# Define the objective function
+# -------------------------------------------------------------------------------------------------------------------
+#                                   CALCULATING THE PARAMETERS TO USE IN THE MODEL
+# -------------------------------------------------------------------------------------------------------------------
 
+function CalculatingParameters()
+
+    # Fixing the demand for a specific year
+    Demand = Array{Float64}(undef, length(T), length(Y), length(S))
+    Demand[:,:,:] .= Demand_profiles[:,Household_type]
+
+    EV_avail = Array{Float64}(undef, length(T), length(Y), length(S))
+    EV_avail[:,:,:] .= 0
+    for i=1:(size(EV_DF,1))
+        EV_avail[i,:,:] .= EV_DF[i,"EV_avail"]
+    end
+
+
+    EV_demand = Array{Float64}(undef, length(T), length(Y), length(S))
+    EV_demand[:,:,:] .= 0
+    for i=1:(size(EV_DF,1)-1)
+        if EV_DF[i,"EV_avail"]==0 && EV_DF[i+1,"EV_avail"]==1
+            EV_demand[i,:,:] .= 0.7*30
+        else
+            EV_demand[i,:,:] .= 0
+        end
+    end
+
+
+    EV_SOC_goal = Array{Float64}(undef, length(T), length(Y), length(S))
+    EV_SOC_goal[:,:,:] .= 0
+    for i=1:(size(EV_DF,1)-1)
+        if EV_DF[i,"EV_avail"]==1 && EV_DF[i+1,"EV_avail"]==0
+            EV_SOC_goal[i,:,:] .= 30
+        else
+            EV_SOC_goal[i,:,:] .= 0
+        end
+    end
+    return Demand, EV_avail, EV_demand, EV_SOC_goal
+
+end
 # -------------------------------------------------------------------------------------------------------------------
 #                                      DEFINING THE CONSTRAINTS FUNCTION
 # -------------------------------------------------------------------------------------------------------------------
@@ -300,6 +337,10 @@ function ExportResults(M, filename)
 
                                 ev_dh_load=( collect(DataFrames.eachcol(ExportVariable(M[:ev_dh_load],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:ev_dh_load],[T,Y,S],["T","Y","S"]))),
 
+                                ev_dh=( collect(DataFrames.eachcol(ExportVariable(M[:ev_dh],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:ev_dh],[T,Y,S],["T","Y","S"]))),
+
+                                ev_ch=( collect(DataFrames.eachcol(ExportVariable(M[:ev_ch],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:ev_ch],[T,Y,S],["T","Y","S"]))),
+
                                 ev_dh_ex=( collect(DataFrames.eachcol(ExportVariable(M[:ev_dh_ex],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:ev_dh_ex],[T,Y,S],["T","Y","S"]))),
 
                                 ev_st=( collect(DataFrames.eachcol(ExportVariable(M[:ev_st],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:ev_st],[T,Y,S],["T","Y","S"]))),
@@ -314,50 +355,15 @@ end
 ModelDataImport()
 # Initializng the model and variables
 M = InitializeModel()
+# Calculating the parameters
+Demand, EV_avail, EV_demand, EV_SOC_goal = CalculatingParameters()
 # Selecting the type of demand
 Household_type = "T4"
-# Fixing the demand for a specific year
-Demand = Array{Float64}(undef, length(T), length(Y), length(S))
-Demand[:,:,:] .= Demand_profiles[:,Household_type]
-# Fixing the capacities of PV and Battery
-FixingCap(M,Household_type, 5, 1, 30)
+# Fixing the capacities of PV, Battery and EV
+FixingCap(M, Household_type, 10, 10, 30)
 # Fixing the capacities
 M = DefineConstraints(M, "base")
 # Optimizing!
 optimize!(M)
 # Exporting the results
 ExportResults(M, "Results.xlsx")
-
-
-
-EV_avail = Array{Float64}(undef, length(T), length(Y), length(S))
-EV_avail[:,:,:] .= 0
-for i=1:(size(EV_DF,1))
-    EV_avail[i,:,:] .= EV_DF[i,"EV_avail"]
-end
-
-
-EV_demand = Array{Float64}(undef, length(T), length(Y), length(S))
-EV_demand[:,:,:] .= 0
-for i=1:(size(EV_DF,1)-1)
-    if EV_DF[i,"EV_avail"]==0 && EV_DF[i+1,"EV_avail"]==1
-        EV_demand[i,:,:] .= 0.7*30
-    else
-        EV_demand[i,:,:] .= 0
-    end
-end
-
-
-EV_SOC_goal = Array{Float64}(undef, length(T), length(Y), length(S))
-EV_SOC_goal[:,:,:] .= 0
-for i=1:(size(EV_DF,1)-1)
-    if EV_DF[i,"EV_avail"]==1 && EV_DF[i+1,"EV_avail"]==0
-        EV_SOC_goal[i,:,:] .= 30
-    else
-        EV_SOC_goal[i,:,:] .= 0
-    end
-end
-
-for i in 1:48
-    println(df[i,:])
-end
