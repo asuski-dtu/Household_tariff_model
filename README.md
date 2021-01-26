@@ -85,10 +85,10 @@ There is the example of model run section:
 `Demand, EV_avail, EV_demand, EV_SOC_goal =CalculatingParameters(30, 30*0.7)`
 - Select the type of household that you want to run:
 
-'Household_type = "T4"'
+`Household_type = "T4"`
 - Fix the variables:
 
-'FixingCap(M, Household_type, 10, 10, 30)'
+`FixingCap(M, Household_type, 10, 10, 30)`
 - Call the Optimize function:
 
 `optimize!(M)`
