@@ -286,6 +286,8 @@ function ExportResults(M, filename)
 
                                 p_PV_bat=( collect(DataFrames.eachcol(ExportVariable(M[:p_PV_bat],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:p_PV_bat],[T,Y,S],["T","Y","S"]))),
 
+                                p_PV_ev=( collect(DataFrames.eachcol(ExportVariable(M[:p_PV_ev],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:p_PV_ev],[T,Y,S],["T","Y","S"]))),
+
                                 g_ex=( collect(DataFrames.eachcol(ExportVariable(M[:g_ex],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:g_ex],[T,Y,S],["T","Y","S"]))),
 
                                 g_im=( collect(DataFrames.eachcol(ExportVariable(M[:g_im],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:g_im],[T,Y,S],["T","Y","S"]))),
@@ -293,6 +295,14 @@ function ExportResults(M, filename)
                                 g_im_load=( collect(DataFrames.eachcol(ExportVariable(M[:g_im_load],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:g_im_load],[T,Y,S],["T","Y","S"]))),
 
                                 g_im_bat=( collect(DataFrames.eachcol(ExportVariable(M[:g_im_bat],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:g_im_bat],[T,Y,S],["T","Y","S"]))),
+
+                                g_im_ev=( collect(DataFrames.eachcol(ExportVariable(M[:g_im_ev],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:g_im_ev],[T,Y,S],["T","Y","S"]))),
+
+                                ev_dh_load=( collect(DataFrames.eachcol(ExportVariable(M[:ev_dh_load],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:ev_dh_load],[T,Y,S],["T","Y","S"]))),
+
+                                ev_dh_ex=( collect(DataFrames.eachcol(ExportVariable(M[:ev_dh_ex],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:ev_dh_ex],[T,Y,S],["T","Y","S"]))),
+
+                                ev_st=( collect(DataFrames.eachcol(ExportVariable(M[:ev_st],[T,Y,S],["T","Y","S"]))), DataFrames.names(ExportVariable(M[:ev_st],[T,Y,S],["T","Y","S"]))),
                                 )
 end
 
@@ -310,7 +320,7 @@ Household_type = "T4"
 Demand = Array{Float64}(undef, length(T), length(Y), length(S))
 Demand[:,:,:] .= Demand_profiles[:,Household_type]
 # Fixing the capacities of PV and Battery
-FixingCap(M,Household_type, 5, 15, 30)
+FixingCap(M,Household_type, 5, 1, 30)
 # Fixing the capacities
 M = DefineConstraints(M, "base")
 # Optimizing!
@@ -342,7 +352,7 @@ EV_SOC_goal = Array{Float64}(undef, length(T), length(Y), length(S))
 EV_SOC_goal[:,:,:] .= 0
 for i=1:(size(EV_DF,1)-1)
     if EV_DF[i,"EV_avail"]==1 && EV_DF[i+1,"EV_avail"]==0
-        EV_SOC_goal[i,:,:] .= 29
+        EV_SOC_goal[i,:,:] .= 30
     else
         EV_SOC_goal[i,:,:] .= 0
     end
