@@ -69,3 +69,22 @@ This function calculates and returns four 3-dimentional arrays:
 
 ### *ExportResults()* function
 *ExportResults()* is a function that exports the variables to Excel file. As an input this function takes the model object and the name of the file with extension. First this file checks whether filename exists in the current folder. If yes it removes it and creates new files and then pushes the particular DataFrames to spreadsheets.
+
+
+# Running the model
+The part of the script that runs the model is included at the end of the script. Before running this part all the functions in the script should be run.
+There is the example of model run section:
+- First import the data from Data folder:
+`ModelDataImport()`
+- Then initialize the model:
+`M = InitializeModel()`
+- Calculate the nessesery parameters:
+`Demand, EV_avail, EV_demand, EV_SOC_goal =CalculatingParameters(30, 30*0.7)`
+- Select the type of household that you want to run:
+'Household_type = "T4"'
+- Fix the variables:
+'FixingCap(M, Household_type, 10, 10, 30)'
+- Call the Optimize function:
+`optimize!(M)`
+- Export results to excel:
+`ExportResults(M, "Results.xlsx")`
