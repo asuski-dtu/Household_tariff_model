@@ -173,15 +173,15 @@ end
 # -------------------------------------------------------------------------------------------------------------------
 function DefineConstraints(M, scheme)
     if scheme == "new"
-        @objective(M, Min, sum(sum(Scalars["CRF"]*PV_par["Capital_cost"]*M[:C_PV][s]
-            + Scalars["CRF"]*Battery_par["Capital_cost"]*M[:C_BT][s] for y in Y) +
+        @objective(M, Min, sum(sum((Scalars["CRF"]*PV_par["Capital_cost"]+PV_par["OM_cost"])*M[:C_PV][s]
+            + (Scalars["CRF"]*Battery_par["Capital_cost"]+ Battery_par["OM_cost"])*M[:C_BT][s] for y in Y) +
             Battery_par["OP_cost"]*sum(M[:b_dh][t,y,s] + M[:b_ch][t,y,s] for t in T for y in Y) + sum(M[:g_im][t,y,s]*(El_price[t,"Tariff_import"]+Network_tariffs["Var_dist"]+Network_tariffs["PSO"]) - M[:g_ex][t,y,s]*(El_price[t,"Tariff_export"]+Network_tariffs["Var_dist"]) for t in T for y in Y)
             + sum(Network_tariffs["Fixed_dist"] for y in Y)
             + (Network_tariffs["Tax"] * sum(M[:g_im_load][t,y,s] + M[:p_PV_load][t,y,s] + M[:g_im_bat][t,y,s] + M[:p_PV_bat][t,y,s] - M[:b_dh_ex][t,y,s] for t in T for y in Y)) for s in S))
 
     elseif scheme == "base"
-        @objective(M, Min, sum(sum(Scalars["CRF"]*PV_par["Capital_cost"]*M[:C_PV][s]
-            + Scalars["CRF"]*Battery_par["Capital_cost"]*M[:C_BT][s] for y in Y)
+        @objective(M, Min, sum(sum((Scalars["CRF"]*PV_par["Capital_cost"]+PV_par["OM_cost"])*M[:C_PV][s]
+            + (Scalars["CRF"]*Battery_par["Capital_cost"]+ Battery_par["OM_cost"])*M[:C_BT][s] for y in Y)
             + Battery_par["OP_cost"] * sum(M[:b_dh][t,y,s] + M[:b_ch][t,y,s] for t in T for y in Y)
             + sum(M[:g_im][t,y,s] * (El_price[t,"Tariff_import"] + Network_tariffs["Var_dist"] + Network_tariffs["PSO"] + Network_tariffs["Tax"])
             - M[:g_ex][t,y,s] * El_price[t,"Tariff_export"] for t in T for y in Y)
