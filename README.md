@@ -1,4 +1,5 @@
 # The household tariff model
+This is the linear programming optimization model to evaluate the optimal operation of a household subsystem under various distribution tariff and tax schemes. The model optimizes the optimal flow of electricity between grid, PV array, battery and EV to satisfy the load at the lowest cost. Additionally, the model is able to find the optimal size of PV and battery components in the household. This model is built on an hourly resolution, with the horizon of years. Moreover, a set of scenarios is incorporated. 
 
 # Model elements
 ### Data folder
