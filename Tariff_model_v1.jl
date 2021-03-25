@@ -54,36 +54,36 @@ function InitializeModel()
     M = Model(Gurobi.Optimizer)
 
     # Battery related variables
-    @variable(M, C_BT[h in H, s in S], lower_bound=0, base_name="Capacity of battery [kWh]")
-    @variable(M, b_st[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Battery SOC in hour T")
-    @variable(M, b_dh[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Battery discharging in hour T")
-    @variable(M, b_dh_load[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Battery discharging to the load in hour T")
-    @variable(M, b_dh_ex[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Battery discharging to the grid in hour T")
-    @variable(M, b_dh_ev[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Battery discharging to the ev in hour T")
-    @variable(M, b_ch[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Battery charging in hour T")
+    @variable(M,C_BT[h=H,s=S],lower_bound=0,base_name="C_BT[h=H,s=S]:")
+    @variable(M,b_st[t=T,y=Y,h=H,s=S],lower_bound=0,     base_name="b_st[t=T,y=Y,h=H,s=S]:")
+    @variable(M,b_dh[t=T,y=Y,h=H,s=S],lower_bound=0,     base_name="b_dh[t=T,y=Y,h=H,s=S]:")
+    @variable(M,b_dh_load[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="b_dh_load[t=T,y=Y,h=H,s=S]:")
+    @variable(M,b_dh_ex[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="b_dh_ex[t=T,y=Y,h=H,s=S]:")
+    @variable(M,b_dh_ev[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="b_dh_ev[t=T,y=Y,h=H,s=S]:")
+    @variable(M,b_ch[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="b_ch[t=T,y=Y,h=H,s=S]:")
 
     # EV related variables
-    @variable(M, C_EV[h in H, s in S], lower_bound=0, base_name="Capacity of EV battery[kWh]")
-    @variable(M, ev_st[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Battery SOC in hour T")
-    @variable(M, ev_dh[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Battery discharging in hour T")
-    @variable(M, ev_ch[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Battery charging in hour T")
-    @variable(M, ev_dh_load[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="EV discharging to the load in hour T")
-    @variable(M, ev_dh_ex[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="EV discharging to the grid in hour T")
+    @variable(M,C_EV[h=H,s=S],lower_bound=0,base_name="C_EV[h=H,s=S]:")
+    @variable(M,ev_st[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="ev_st[t=T,y=Y,h=H,s=S]:")
+    @variable(M,ev_dh[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="ev_dh[t=T,y=Y,h=H,s=S]:")
+    @variable(M,ev_ch[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="ev_ch[t=T,y=Y,h=H,s=S]:")
+    @variable(M,ev_dh_load[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="ev_dh_load[t=T,y=Y,h=H,s=S]:")
+    @variable(M,ev_dh_ex[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="ev_dh_ex[t=T,y=Y,h=H,s=S]:")
 
     # PV related constraints
-    @variable(M, C_PV[h in H, s in S], lower_bound=0, base_name="Capacity of PV array [kW]")
-    @variable(M, p_PV[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Production level of PV array [kW]")
-    @variable(M, p_PV_load[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Production of PV array used directly to satisfy the load [kW]")
-    @variable(M, p_PV_bat[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Production level of PV array used to charge the battery [kW]")
-    @variable(M, p_PV_ev[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Production level of PV array used to charge the EV [kW]")
-    @variable(M, p_PV_ex[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Production level of PV array exported to the grid[kW]")
+    @variable(M,C_PV[h=H,s=S],lower_bound=0,base_name="C_PV[h=H,s=S]:")
+    @variable(M,p_PV[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="p_PV[t=T,y=Y,h=H,s=S]:")
+    @variable(M,p_PV_load[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="p_PV_load[t=T,y=Y,h=H,s=S]:")
+    @variable(M,p_PV_bat[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="p_PV_bat[t=T,y=Y,h=H,s=S]:")
+    @variable(M,p_PV_ev[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="p_PV_ev[t=T,y=Y,h=H,s=S]:")
+    @variable(M,p_PV_ex[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="p_PV_ex[t=T,y=Y,h=H,s=S]:")
 
     # Grid related constraints
-    @variable(M, g_ex[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Export to the grid in hour T")
-    @variable(M, g_im[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Import from the grid in hour T")
-    @variable(M, g_im_load[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Import from the grid to satisfy the load in hour T")
-    @variable(M, g_im_bat[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Import from the grid to charge the battery in hour T")
-    @variable(M, g_im_ev[t in T, y in Y, h in H, s in S], lower_bound=0, base_name="Import from the grid to charge the ev in hour T")
+    @variable(M,g_ex[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="g_ex[t=T,y=Y,h=H,s=S]:")
+    @variable(M,g_im[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="g_im[t=T,y=Y,h=H,s=S]:")
+    @variable(M,g_im_load[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="g_im_load[t=T,y=Y,h=H,s=S]:")
+    @variable(M,g_im_bat[t=T,y=Y,h=H,s=S],lower_bound=0,base_name="g_im_bat[t=T,y=Y,h=H,s=S]:")
+    @variable(M,g_im_ev[t=T,y = Y,h=H,s=S],lower_bound=0,base_name="g_im_ev[t=T,y=Y,h=H,s=S]:")
     return(M)
 end
 
@@ -206,7 +206,6 @@ function CalculatingParameters(SOC_goal, EV_cons_one_trip)
 
 end
 
-
 # -------------------------------------------------------------------------------------------------------------------
 #                                      DEFINING THE CONSTRAINTS FUNCTION
 # -------------------------------------------------------------------------------------------------------------------
@@ -313,96 +312,25 @@ end
 #                                       EXPORTING THE RESULTS FUNCTION
 # -------------------------------------------------------------------------------------------------------------------
 
-# Function to convert variables to the data_frames
-function ExportVariable(variable, sets, sets_names)
-    # Create column names of the dataframe
-    colnames= Symbol.(var for var in push!(sets_names, "Value"))
-
-    # Create empty dataframe with the colnames
-    df = DataFrame(fill(Any, length(colnames)), colnames)
-
-    # Loping over every set and checking how how many sets to loop over
-    for i1 in sets[1]
-        if length(sets) == 1
-            # If the variable has only one set push all the values to the dataframe
-            push!(df, Tuple([i1, value(variable[i1,i2])]))
-        else
-            for i2 in sets[2]
-                if length(sets) == 2
-                    push!(df, Tuple([i1, i2, value(variable[i1,i2])]))
-                else
-                    for i3 in sets[3]
-                        if length(sets) == 3
-                            push!(df, Tuple([i1, i2, i3, value(variable[i1,i2,i3])]))
-                        else
-                            for i4 in sets[4]
-                                if length(sets) == 4
-                                    push!(df, Tuple([i1, i2, i3, i4, value(variable[i1,i2,i3,i4])]))
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
+function create_var_dict(M)
+    str(x) = string(x) # Getting string function
+    spl(x) = split(x, ",") # Spliting with comma function
+    var_str = str.(all_variables(M)) #Getting the string of all variables in a model
+    sets_str = (s -> SubString(s, nextind(s, findfirst(":[", s)[1]+1), prevind(s, findlast(']', s)))).(var_str) # Obtaining the sets string
+    var_name_str = (s -> SubString(s, 1, prevind(s, findfirst('[', s)))).(var_str) # Obtaining the name of variables
+    uniq_var_names = unique(var_name_str) # Obtaining unique names of variables
+    Variable_dict = Dict{Symbol,DataFrame}()
+    for un in uniq_var_names # Looping over variables
+        Bool = var_name_str .== un # Boolean value to filter total vectors
+        Names = unique([split(el, ",") for el in (s -> SubString(s, nextind(s, findfirst('[', s)), prevind(s, findfirst(']', s)))).(var_str[Bool])])[1] # Getting the names of the sets for particular variable
+        Sets_str_spl = [split(el, ",") for el in sets_str[Bool]] # Split sets of filtered vector with comma
+        df = DataFrame([Any for i in 1:length(Names)],[Symbol(s) for s in Names], sum(Bool)) # Create empty dataframe
+        df[:,:] = permutedims(reshape(vcat(Sets_str_spl...), length(Names), sum(Bool))) # Pass sets values
+        df[!,:Value] = value.(all_variables(M))[Bool] # Pass values
+        Variable_dict[Symbol(un)] = df # Pass dataframe to dictionary
     end
-    return df
+    return Variable_dict
 end
-
-# List of all variables (not in use now)
-#VARS = [b_st,b_dh,b_dh_load,b_dh_ex,b_ch,p_PV,p_PV_load,p_PV_bat,p_PV_ex,g_ex,g_im,g_im_load,g_im_bat]
-
-
-function ExportResults(M, filename)
-# If Results.xlsx exists then remove
-    if isfile(filename)
-        rm(filename)
-        println("Removing "*filename)
-    end
-    # Writing results to excel
-    XLSX.writetable(filename,
-                                b_st=( collect(DataFrames.eachcol(ExportVariable(M[:b_st],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:b_st],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                b_dh=( collect(DataFrames.eachcol(ExportVariable(M[:b_dh],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:b_dh],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                b_dh_load=( collect(DataFrames.eachcol(ExportVariable(M[:b_dh_load],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:b_dh_load],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                b_dh_ex=( collect(DataFrames.eachcol(ExportVariable(M[:b_dh_ex],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:b_dh_ex],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                b_dh_ev=( collect(DataFrames.eachcol(ExportVariable(M[:b_dh_ev],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:b_dh_ev],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                b_ch=( collect(DataFrames.eachcol(ExportVariable(M[:b_ch],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:b_ch],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                p_PV=( collect(DataFrames.eachcol(ExportVariable(M[:p_PV],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:p_PV],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                p_PV_load=( collect(DataFrames.eachcol(ExportVariable(M[:p_PV_load],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:p_PV_load],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                p_PV_bat=( collect(DataFrames.eachcol(ExportVariable(M[:p_PV_bat],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:p_PV_bat],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                p_PV_ev=( collect(DataFrames.eachcol(ExportVariable(M[:p_PV_ev],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:p_PV_ev],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                g_ex=( collect(DataFrames.eachcol(ExportVariable(M[:g_ex],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:g_ex],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                g_im=( collect(DataFrames.eachcol(ExportVariable(M[:g_im],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:g_im],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                g_im_load=( collect(DataFrames.eachcol(ExportVariable(M[:g_im_load],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:g_im_load],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                g_im_bat=( collect(DataFrames.eachcol(ExportVariable(M[:g_im_bat],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:g_im_bat],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                g_im_ev=( collect(DataFrames.eachcol(ExportVariable(M[:g_im_ev],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:g_im_ev],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                ev_dh_load=( collect(DataFrames.eachcol(ExportVariable(M[:ev_dh_load],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:ev_dh_load],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                ev_dh=( collect(DataFrames.eachcol(ExportVariable(M[:ev_dh],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:ev_dh],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                ev_ch=( collect(DataFrames.eachcol(ExportVariable(M[:ev_ch],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:ev_ch],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                ev_dh_ex=( collect(DataFrames.eachcol(ExportVariable(M[:ev_dh_ex],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:ev_dh_ex],[T,Y,H,S],["T","Y","H","S"]))),
-
-                                ev_st=( collect(DataFrames.eachcol(ExportVariable(M[:ev_st],[T,Y,H,S],["T","Y","H","S"]))), DataFrames.names(ExportVariable(M[:ev_st],[T,Y,H,S],["T","Y","H","S"]))),
-                                )
-end
-
 
 # -------------------------------------------------------------------------------------------------------------------
 #                                       RUNNING THE MODEL
@@ -420,4 +348,6 @@ M = DefineConstraints(M, "base")
 # Optimizing!
 optimize!(M)
 # Exporting the results
-ExportResults(M, "Results.xlsx")
+# ExportResults(M, "Results.xlsx")
+
+Results_Dict = create_var_dict(M)
